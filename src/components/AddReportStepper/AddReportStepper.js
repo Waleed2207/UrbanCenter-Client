@@ -32,7 +32,6 @@ const AddReportStepper = ({ onReportSubmit }) => {
   const [imagePreview, setImagePreview] = useState(DEFAULT_IMAGE); // Default GIF
   const [fieldErrors, setFieldErrors] = useState({});
   const [subcategories, setSubcategories] = useState([]);
-
   const [reportData, setReportData] = useState({
     category: "",
     subcategory: "",
@@ -42,8 +41,11 @@ const AddReportStepper = ({ onReportSubmit }) => {
     location_name: "", // New field for readable location
     priority: "medium",
     user_id: user ? user._id : "",
-  });
+    email: user ? user.email : "",
+    phone_number: user?.phone_number || "",
 
+  });
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -268,13 +270,21 @@ const AddReportStepper = ({ onReportSubmit }) => {
           <Box sx={{ mt: 3 }}>
             <TextField 
               fullWidth 
-              label="User ID (Auto-filled)" 
-              name="user_id" 
-              value={reportData.user_id || ''} 
-              disabled 
+              label="Email" 
+              name="email" 
+              value={reportData.email || ''}  
+              disabled
               margin="normal" 
             />
-
+            <TextField 
+              fullWidth 
+              label="Phone Number" 
+              name="phone_number" 
+              value={reportData.phone_number} 
+              onChange={handleChange} 
+              margin="normal" 
+              required 
+            />
             <TextField 
               fullWidth 
               select 

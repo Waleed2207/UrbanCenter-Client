@@ -111,6 +111,7 @@ return (
 
     <Grid container justifyContent="center">
       <Grid item xs={20} sm={14} >
+      {/* {report.status !== "resolved" && ( */}
         <Card
           sx={{
             boxShadow: 3,
@@ -161,6 +162,11 @@ return (
               <strong>📝 Description:</strong>{" "}
               <span>{report.description || "No description provided"}</span>
             </Typography>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1,width: "50%"  }}>
+              <strong>📝 phoneNumber:</strong>{" "}
+              <span>{report.phone_number || "No description provided"}</span>
+            </Typography>
+
 
             {/* Location Name */}
             <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>

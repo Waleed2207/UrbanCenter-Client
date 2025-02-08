@@ -12,7 +12,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from "@mui/material";
-import { Email, Visibility, VisibilityOff, Person, Work } from "@mui/icons-material";
+import { Email, Visibility, VisibilityOff, Person, Work, Phone } from "@mui/icons-material";
 import { SERVER_URL } from "../../consts";
 import logo from "../../assets/urban-city-logo.png";
 
@@ -26,6 +26,7 @@ const SignInForm = ({ onSignIn }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState("");
   const [role, setRole] = useState("citizen");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,6 +69,7 @@ const SignInForm = ({ onSignIn }) => {
         email,
         password,
         role,
+        phone_number: role === "citizen" ? phoneNumber : undefined,
       });
   
       if (response.status === 200) {
@@ -146,6 +148,22 @@ const SignInForm = ({ onSignIn }) => {
                       startAdornment: (
                         <InputAdornment position="start">
                           <Email />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Phone Number"
+                    variant="outlined"
+                    margin="normal"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    required={role === "citizen"}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Phone />
                         </InputAdornment>
                       ),
                     }}
