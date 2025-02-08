@@ -110,22 +110,24 @@ return (
     </Collapse>
 
     <Grid container justifyContent="center">
-      <Grid item xs={12}>
+      <Grid item xs={20} sm={14} >
         <Card
           sx={{
-            boxShadow: 2,
+            boxShadow: 3,
             borderRadius: 3,
             overflow: "hidden",
-            padding: 2,
+            padding: { xs: 2, sm: 3, md: 4 }, // Adjust padding dynamically
             display: "flex",
-            alignItems: "start",
+            flexDirection: { xs: "column", sm: "row" }, // Column layout on small screens, row on larger screens
             gap: 2,
+            width: "100%", // Ensures full width within grid item
+            minWidth: "280px", 
           }}
         >
           {report.image_url && (
             <CardMedia
               component="img"
-              sx={{ width: 100, height: 100, borderRadius: 2, objectFit: "cover", cursor: "pointer" }}
+              sx={{ width: 150, height: 150, borderRadius: 2, objectFit: "cover", cursor: "pointer" }}
               image={report.image_url}
               alt="Report"
               onClick={() => {
@@ -135,17 +137,45 @@ return (
             />
           )}
           <Box sx={{ flexGrow: 1 }}>
+            {/* Report Category */}
             <Typography variant="h6" color="primary" fontWeight="bold">
               {report.category}
             </Typography>
-            <Typography variant="body2" color="textSecondary">
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+            {/* Report Created Time */}
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 , minWidth: "50%" }}>
               <strong>📅 Created:</strong>{" "}
               <span>{moment(report.created_at).format("DD/MM/YYYY hh:mm A")}</span>
             </Typography>
-            <Typography variant="body2" fontWeight="bold" mt={1}>
+
+            {/* Reported by (Citizen Name) */}
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1, minWidth: "50%"  }}>
+              <strong>👤 Reported by:</strong>{" "}
+              <span style={{ fontWeight: "bold", color: "#1976D2" }}>
+                {report.citizen_name || "Unknown"}
+              </span>
+            </Typography>
+            </Box>
+            {/* Report Description */}
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1,width: "50%"  }}>
+              <strong>📝 Description:</strong>{" "}
+              <span>{report.description || "No description provided"}</span>
+            </Typography>
+
+            {/* Location Name */}
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              <strong>📍 Location:</strong>{" "}
+              <span>{report.location_name || "Unknown Location"}</span>
+            </Typography>
+
+            {/* Report Status */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+            {/* Report Status */}
+            <Typography variant="body2" fontWeight="bold" sx={{ minWidth: "50%" }}>
               <strong>📌 Status:</strong>{" "}
               <Chip
                 label={report.status}
+                sx={{ width: "110px" }} // Ensures uniform size
                 color={
                   report.status === "pending"
                     ? "warning"
@@ -155,10 +185,13 @@ return (
                 }
               />
             </Typography>
-            <Typography variant="body2" fontWeight="bold" mt={1}>
+
+            {/* Report Priority */}
+            <Typography variant="body2" fontWeight="bold" sx={{ minWidth: "50%" }}>
               <strong>⚠️ Priority:</strong>{" "}
               <Chip
                 label={report.priority}
+                sx={{ width: "110px" }} // Ensures uniform size
                 color={
                   report.priority === "high"
                     ? "error"
@@ -169,9 +202,16 @@ return (
               />
             </Typography>
           </Box>
-          <IconButton onClick={() => setOpenDialog(true)}>
-            <EditIcon color="primary" />
-          </IconButton>
+
+          </Box>
+          {/* Edit Button - Hidden or Disabled if Resolved */}
+          {report.status !== "resolved" && (
+            <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start", flexGrow: 1 }}>
+              <IconButton onClick={() => setOpenDialog(true)} disabled={report.status === "resolved"}>
+                <EditIcon color="primary" />
+              </IconButton>
+            </Box>
+          )}
         </Card>
       </Grid>
     </Grid>

@@ -495,7 +495,7 @@ useEffect(() => {
       <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Image Preview</DialogTitle>
         <DialogContent>
-          {selectedImage && <img src={selectedImage} alt="Selected Report" style={{ width: '100%', maxHeight: '500px', objectFit: 'contain' }} />}
+          {selectedImage && <img src={selectedImage} alt="Selected Report" style={{ width: '100%', maxHeight: '500px', objectFit: 'cover' }} />}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenImageDialog(false)} color="primary">Close</Button>
