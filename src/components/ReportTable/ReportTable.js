@@ -3,7 +3,7 @@ import { Typography, Box, Collapse, Alert, Backdrop, CircularProgress, Button, D
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import moment from "moment-timezone";
-// import io from "socket.io-client"; 
+import io from "socket.io-client"; 
 import DataTable from '../DataTable';
 import AddRuleDialog from '../../components/AddRuleDialog/AddRuleDialog';
 import { SERVER_URL } from "../../consts";
@@ -11,7 +11,7 @@ import AuthContext from "../../contexts/AuthContext";
 import ReportCard from "../../components/ReportCard/ReportCard"; 
 import LoadingIndicator from "../../components/LoadingIndicator/LoadingIndicator"; 
 
-// import socket from "../../WebSocketClient"; // ✅ Import fixed WebSocket client
+const socket = io(SERVER_URL);
 const ReportTable = () => {
   const { user } = useContext(AuthContext);
   const [reports, setReports] = useState([]);
@@ -27,6 +27,13 @@ const ReportTable = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const locationCache = useRef(new Map()); // 🔥 Cache for location names
   const [selectedReport, setSelectedReport] = useState(null);
+  // const [alertMessage, setAlertMessage] = useState(null);
+
+  useEffect(() => {
+    if (user && user._id) {
+      socket.emit("registerUser", user._id);
+    }
+  }, [user]);
 
   const fetchReports = useCallback(async () => {
     if (!user || !user._id) return;
@@ -70,35 +77,70 @@ const ReportTable = () => {
     }
   }, [user]);
 
+    useEffect(() => {
+    socket.on("reportAdded", (newReport) => {
+      if (user?.role === "authority" && newReport.category === user.related_category) {
+        setMessage(`📢 A new report has been added! \n
+          Category: ${newReport.category} \n
+          Reported by: ${newReport.citizen_name}`);
+                  fetchReports();
+        setOpenCollapse(true);
+      }
+      setReports((prev) => [...prev, newReport]);
+    });
+
+    socket.on("reportUpdated", (updatedReport) => {
+      // ✅ Notify authority users about the update if they are responsible for this category
+      if (user?.role === "authority" && updatedReport.category === user.related_category) {
+        setMessage(`📢 A report has been updated! \n
+          Category: ${updatedReport.category} \n
+          Updated by: ${updatedReport.citizen_name}`);
+        fetchReports(); // Refresh reports
+        setOpenCollapse(true);
+      }
+  
+      // ✅ Notify citizens if their report status is updated
+      if (user?.role === "citizen" && updatedReport.citizen_id === user._id) {
+        setMessage(`🔔 Your report status has been updated! \n
+          📌 Category: ${updatedReport.category || "Unknown Category"} > ${updatedReport.subcategory || "Unknown Subcategory"} \n
+          📝 Description: ${updatedReport.description || "No description provided"} \n
+          🔥 Priority: ${updatedReport.priority || "Not specified"} \n
+          ✅ New Status: ${updatedReport.status}`);
+        fetchReports();
+        setOpenCollapse(true);
+      }
+      // ✅ Update the state to reflect the new status
+      setReports((prev) =>
+        prev.map((report) =>
+          report._id === updatedReport.report_id
+            ? { ...report, status: updatedReport.status }
+            : report
+        )
+      );
+    });
+
+    socket.on("reportDeleted", (deletedReportId) => {
+      if (user?.role === "authority") {
+        setMessage(`📢 A report has been deleted! \n
+        Category: ${deletedReportId.category} \n
+        Deleted by: ${deletedReportId.citizen_name}`);    
+        fetchReports();    
+        setOpenCollapse(true);
+      }
+      setReports((prev) => prev.filter((report) => report._id !== deletedReportId));
+    });
+
+    return () => {
+      socket.off("reportAdded");
+      socket.off("reportUpdated");
+      socket.off("reportDeleted");
+    };
+  }, [user, fetchReports]);
+
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
 
-  // useEffect(() => {
-  //   socket.on("reportAdded", (newReport) => {
-  //     setReports((prev) => [...prev, newReport]);
-  //     setMessage("📢 A new report has been added!");
-  //     setOpenCollapse(true);
-  //   });
-
-  //   socket.on("reportUpdated", (updatedReport) => {
-  //     setReports((prev) => prev.map((r) => (r._id === updatedReport._id ? updatedReport : r)));
-  //     setMessage("📢 A report has been updated!");
-  //     setOpenCollapse(true);
-  //   });
-
-  //   socket.on("reportDeleted", (deletedReportId) => {
-  //     setReports((prev) => prev.filter((r) => r._id !== deletedReportId));
-  //     setMessage("📢 A report has been deleted!");
-  //     setOpenCollapse(true);
-  //   });
-
-  //   return () => {
-  //     socket.off("reportAdded");
-  //     socket.off("reportUpdated");
-  //     socket.off("reportDeleted");
-  //   };
-  // }, []);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -376,6 +418,16 @@ const handleDelete = async (selectedIds) => {
     setOpenBackdrop(false); // Hide loading indicator
   }
 };
+useEffect(() => {
+  if (message || error) {
+    setOpenCollapse(true); // Ensure the alert is visible when a message appears
+    const timer = setTimeout(() => {
+      setOpenCollapse(false);
+    }, 20000); // Auto-hide after 20 seconds
+
+    return () => clearTimeout(timer); // Cleanup function
+  }
+}, [message, error]);
 
   const handleStatusUpdate = (reportId, newStatus) => {
     setReports((prevReports) =>

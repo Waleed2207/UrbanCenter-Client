@@ -27,7 +27,10 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem"; 
 import SettingsIcon from "@mui/icons-material/Settings";
+import MailIcon from '@mui/icons-material/Mail';
 import Cookies from "js-cookie";
+import Badge from '@mui/material/Badge';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
 const drawerWidth = 240;
 
@@ -211,6 +214,22 @@ const Dashboard = ({ user, onLogout, children }) => {
             </SearchIconWrapper>
             <StyledInputBase placeholder="Search..." inputProps={{ "aria-label": "search" }} />
           </Search>
+          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+            <IconButton size="large" aria-label="show 4 new mails" color="inherit">
+              <Badge badgeContent={4} color="error">
+                <MailIcon />
+              </Badge>
+            </IconButton>
+            <IconButton
+              size="large"
+              aria-label="show 17 new notifications"
+              color="inherit"
+            >
+              <Badge badgeContent={17} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+           </Box> 
           <IconButton
             size="large"
             edge="end"

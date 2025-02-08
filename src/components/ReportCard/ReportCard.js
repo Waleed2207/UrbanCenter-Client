@@ -207,7 +207,7 @@ return (
           <img
             src={selectedImage}
             alt="Selected Report"
-            style={{ width: "100%", maxHeight: "500px", objectFit: "contain" }}
+            style={{ width: "100%", maxHeight: "500px", objectFit: "cover" }}
           />
         )}
       </DialogContent>
