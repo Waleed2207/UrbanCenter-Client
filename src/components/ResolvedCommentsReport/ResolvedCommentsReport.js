@@ -138,7 +138,7 @@ const ResolvedCommentsReport = () => {
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 1}}>
                       <Box sx={{ display: "flex", alignItems: 'center', justifyContent: "space-between", mt: 2 }}>
                         <Typography variant="body2" color="textSecondary">
-                          <strong>📅 Created:</strong> {moment(comment.created_at).format("DD/MM/YYYY hh:mm A")}
+                          <strong>📅 Updated:</strong> {moment(comment.created_at).format("DD/MM/YYYY hh:mm A")}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
                           <strong>👤 Reported by:</strong> {comment.citizen_name || "Unknown"}
