@@ -50,7 +50,6 @@ const UpdateDialog = ({ open, handleClose, handleUpdate, selectedReport }) => {
 
   useEffect(() => {
     if (selectedReport && open) {
-      console.log("Selected Report:", selectedReport); // Debugging log
   
       // Capitalize priority value from backend ("low" → "Low")
       const capitalizePriority = (priority) => 

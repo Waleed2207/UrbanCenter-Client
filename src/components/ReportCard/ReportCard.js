@@ -67,8 +67,6 @@ const handleStatusChange = async () => {
       }
     }
 
-    console.log("Stored User ID:", storedUserId);
-
     if (!storedUserId) {
       setError(true);
       setAlertMessage("🚨 No active user found. Please log in again.");
@@ -117,7 +115,6 @@ const handleStatusChange = async () => {
     );
 
     if (response.status === 200) {
-      console.log("✅ Status updated successfully:", response.data);
       onUpdateStatus(report._id, status);
       setAlertMessage("✅ Report status updated successfully!");
       setError(false);

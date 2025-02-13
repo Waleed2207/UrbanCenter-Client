@@ -136,7 +136,6 @@ const Dashboard = ({ user, onLogout, children }) => {
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
-
   const toggleDrawer = () => {
     setOpen(!open);
   };
@@ -250,19 +249,29 @@ const Dashboard = ({ user, onLogout, children }) => {
         </DrawerHeader>
         <Divider />
         <List>
-          {[
-            { text: "Reports", path: "/reports", icon: <InboxIcon /> },
-            { text: "Resolved Report", path: "/reports/api/v1", icon: <CheckCircleIcon /> },
-            { text: "Start Report", path: "/reports/api", icon: <ReportProblemIcon/>}
-          ].map(({ text, path, icon }) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton onClick={() => handleNavigation(path)}>
-                <ListItemIcon>{icon}</ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+        {/* Common Menu Items for All Users */}
+        {[
+          { text: "Reports", path: "/reports", icon: <InboxIcon /> },
+          { text: "Start Report", path: "/reports/api", icon: <ReportProblemIcon/> }
+        ].map(({ text, path, icon }) => (
+          <ListItem key={text} disablePadding>
+            <ListItemButton onClick={() => handleNavigation(path)}>
+              <ListItemIcon>{icon}</ListItemIcon>
+              <ListItemText primary={text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+
+        {/* 🔥 Show "Resolved Report" ONLY if the user is an authority */}
+        {user?.role === "authority" && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigation("/reports/api/v1")}>
+              <ListItemIcon><CheckCircleIcon /></ListItemIcon>
+              <ListItemText primary="Resolved Report" />
+            </ListItemButton>
+          </ListItem>
+        )}
+      </List>
       </Drawer>
       <Box component="main" 
         sx={{

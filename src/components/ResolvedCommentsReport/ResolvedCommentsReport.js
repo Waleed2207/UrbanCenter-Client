@@ -46,7 +46,7 @@ const ResolvedCommentsReport = () => {
       );
       setComments(response.data.comments || []);
     } catch (err) {
-      setError("Failed to fetch resolved comments or no resolved comments are available. Please try again.");
+      setError("🚨 Failed to fetch resolved comments or no resolved comments are available. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -59,12 +59,12 @@ const ResolvedCommentsReport = () => {
         // Immediately remove the comment from state
         setComments((prevComments) => prevComments.filter(comment => comment.report_id !== commentToDelete));
 
-        setAlertMessage("Comment deleted successfully.");
+        setAlertMessage("✅ Comment report deleted successfully.");
         setOpenCollapse(true);
       }
       setOpenDeleteDialog(false);
     } catch (err) {
-      setError("Failed to delete comment. Please try again.");
+      setError("🚨 Failed to delete comment. Please try again.");
     }
   };
 

@@ -33,6 +33,7 @@ const ReportTable = () => {
   const reportAddedSound = useRef(new Audio("/sounds/reportAdded.mp3"));
   const reportUpdatedSound = useRef(new Audio("/sounds/reportUpdated.mp3"));
   const reportDeletedSound = useRef(new Audio("/sounds/reportDeleted.mp3"));
+
   useEffect(() => {
     const setupAudio = () => {
       reportAddedSound.current = new Audio("/sounds/reportAdded.mp3");
@@ -56,34 +57,37 @@ const ReportTable = () => {
   }, []);
   
   
-  useEffect(() => {
-    const unlockAudio = async () => {
-      setUserInteracted(true);
-  
-      // Force load the audio again in case it wasn't loaded
-      reportUpdatedSound.current.load();
-  
-      // Play a silent sound to unlock autoplay
-      try {
-        await reportUpdatedSound.current.play();
-        reportUpdatedSound.current.pause();
-        console.log("✅ Audio unlocked");
-      } catch (error) {
-        console.warn("🚨 Audio unlock failed:", error);
-      }
-  
-      document.removeEventListener("click", unlockAudio);
-      document.removeEventListener("keydown", unlockAudio);
-    };
-  
-    document.addEventListener("click", unlockAudio, { once: true });
-    document.addEventListener("keydown", unlockAudio, { once: true });
-  
-    return () => {
-      document.removeEventListener("click", unlockAudio);
-      document.removeEventListener("keydown", unlockAudio);
-    };
-  }, []);
+useEffect(() => {
+  const unlockAudio = async () => {
+    setUserInteracted(true);
+
+    try {
+      // Attempt to play a silent sound to unlock autoplay
+      await reportUpdatedSound.current.play();
+      reportUpdatedSound.current.pause();
+      console.log("✅ Audio unlocked");
+    } catch (error) {
+      console.warn("🚨 Audio unlock failed:", error);
+    }
+
+    // Remove event listeners after first interaction
+    document.removeEventListener("click", unlockAudio);
+    document.removeEventListener("keydown", unlockAudio);
+    document.removeEventListener("touchstart", unlockAudio);
+  };
+
+  // Add event listeners for user interaction
+  document.addEventListener("click", unlockAudio, { once: true });
+  document.addEventListener("keydown", unlockAudio, { once: true });
+  document.addEventListener("touchstart", unlockAudio, { once: true });
+
+  return () => {
+    document.removeEventListener("click", unlockAudio);
+    document.removeEventListener("keydown", unlockAudio);
+    document.removeEventListener("touchstart", unlockAudio);
+  };
+}, []);
+
   
   
 
@@ -95,46 +99,57 @@ const ReportTable = () => {
 
   const fetchReports = useCallback(async () => {
     if (!user || !user._id) return;
-
+  
+    const controller = new AbortController();
+    const signal = controller.signal;
+  
     try {
       setIsLoading(true);
       setError(null);
       
       let endpoint = `${SERVER_URL}/api/reports/report/user/${user._id}`;
-
-      // 🔥 Authority users fetch reports based on their assigned category
+  
       if (user.role === "authority") {
         endpoint = `${SERVER_URL}/api/reports/report/category/${user._id}`;
       }
-
-      const response = await axios.get(endpoint);
+  
+      const response = await axios.get(endpoint, { signal });
       if (response.status !== 200) {
         throw new Error("Failed to fetch reports");
       }
       const data = response.data;
-
+  
       if (Array.isArray(data.reports)) {
-        // 🔥 Parallelized location fetching
-        const locations = await Promise.all(data.reports.map(async (report) => ({
-          ...report,
-          location_name: await fetchLocationName(report.location_lat, report.location_long),
-          id: report._id,
-          created_at: report.created_at ? moment(report.created_at).format("YYYY-MM-DD HH:mm:ss") : "N/A",
-          updated_at: report.updated_at ? moment(report.updated_at).format("YYYY-MM-DD HH:mm:ss") : "N/A"
-        })));
-
-        setReports(locations);
+        const locationPromises = data.reports.map(async (report) => {
+          const location_name = await fetchLocationName(report.location_lat, report.location_long);
+          return {
+            ...report,
+            location_name,
+            id: report._id,
+            created_at: report.created_at ? moment(report.created_at).format("YYYY-MM-DD HH:mm:ss") : "N/A",
+            updated_at: report.updated_at ? moment(report.updated_at).format("YYYY-MM-DD HH:mm:ss") : "N/A",
+          };
+        });
+  
+        const locations = await Promise.allSettled(locationPromises);
+        setReports(locations.filter(p => p.status === "fulfilled").map(p => p.value));
       } else {
         setReports([]);
       }
     } catch (err) {
-      setError(err.message);
-      setOpenCollapse(true);
+      if (axios.isCancel(err)) {
+        console.log("Request canceled:", err.message);
+      } else {
+        setError(err.message);
+        setOpenCollapse(true);
+      }
     } finally {
       setIsLoading(false);
     }
+  
+    return () => controller.abort(); // Cleanup
   }, [user]);
-
+  
 
     useEffect(() => {
     socket.on("reportAdded", (newReport) => {
@@ -447,9 +462,7 @@ const handleDelete = async (selectedIds) => {
             const errorData = await response.json();
             throw new Error(`Failed to delete report ${id}: ${errorData.error}`);
           }
-          // if (response.status === 200) {
-          //   socket.emit("reportDeleted", response.data.report); // 🔥 Emit event to server
-          // }
+
           return id; // Return deleted report ID for confirmation
         } catch (err) {
           console.error(`Error deleting report ${id}:`, err.message);
