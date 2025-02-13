@@ -6,7 +6,8 @@ import store from "./store/index"; // ✅ Import Redux store
 import Dashboard from "./pages/Dashboard/Dashboard";
 import SignIn from "./pages/SignIn/SignIn";
 import ReportTable from "./components/ReportTable/ReportTable";
-import Settings from "./components/Settings/index";
+// import Settings from "./components/Settings/index";
+import ResolvedCommentsReport from "./components/ResolvedCommentsReport/ResolvedCommentsReport"
 import ReportPage from "./pages/ReportPage/ReportPage";
 import AuthContext from "./contexts/AuthContext";
 import UserContext from "./contexts/UserContext";
@@ -51,11 +52,11 @@ const App = () => {
         />
 
         <Route
-          path="/settings"
+          path="/reports/api/v1"
           element={
             isAuthenticated ? (
               <Dashboard user={user} onLogout={handleLogout}>
-                <Settings />
+                <ResolvedCommentsReport />
               </Dashboard>
             ) : (
               <Navigate to="/" replace />

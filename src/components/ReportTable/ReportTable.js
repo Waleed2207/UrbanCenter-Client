@@ -27,7 +27,65 @@ const ReportTable = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const locationCache = useRef(new Map()); // 🔥 Cache for location names
   const [selectedReport, setSelectedReport] = useState(null);
-  // const [alertMessage, setAlertMessage] = useState(null);
+  const [userInteracted, setUserInteracted] = useState(false);
+
+  // 🔊 Audio references for sound notifications
+  const reportAddedSound = useRef(new Audio("/sounds/reportAdded.mp3"));
+  const reportUpdatedSound = useRef(new Audio("/sounds/reportUpdated.mp3"));
+  const reportDeletedSound = useRef(new Audio("/sounds/reportDeleted.mp3"));
+  useEffect(() => {
+    const setupAudio = () => {
+      reportAddedSound.current = new Audio("/sounds/reportAdded.mp3");
+      reportUpdatedSound.current = new Audio("/sounds/reportUpdated.mp3");
+      reportDeletedSound.current = new Audio("/sounds/reportDeleted.mp3");
+  
+      // Force the browser to start loading the file
+      [reportAddedSound.current, reportUpdatedSound.current, reportDeletedSound.current].forEach(audio => {
+        audio.preload = "auto"; // Ensures file is preloaded
+        audio.load(); // Forces loading the audio
+      });
+  
+      console.log("🔊 Audio initialized:", {
+        added: reportAddedSound.current.readyState,
+        updated: reportUpdatedSound.current.readyState,
+        deleted: reportDeletedSound.current.readyState
+      });
+    };
+  
+    setupAudio();
+  }, []);
+  
+  
+  useEffect(() => {
+    const unlockAudio = async () => {
+      setUserInteracted(true);
+  
+      // Force load the audio again in case it wasn't loaded
+      reportUpdatedSound.current.load();
+  
+      // Play a silent sound to unlock autoplay
+      try {
+        await reportUpdatedSound.current.play();
+        reportUpdatedSound.current.pause();
+        console.log("✅ Audio unlocked");
+      } catch (error) {
+        console.warn("🚨 Audio unlock failed:", error);
+      }
+  
+      document.removeEventListener("click", unlockAudio);
+      document.removeEventListener("keydown", unlockAudio);
+    };
+  
+    document.addEventListener("click", unlockAudio, { once: true });
+    document.addEventListener("keydown", unlockAudio, { once: true });
+  
+    return () => {
+      document.removeEventListener("click", unlockAudio);
+      document.removeEventListener("keydown", unlockAudio);
+    };
+  }, []);
+  
+  
 
   useEffect(() => {
     if (user && user._id) {
@@ -77,6 +135,7 @@ const ReportTable = () => {
     }
   }, [user]);
 
+
     useEffect(() => {
     socket.on("reportAdded", (newReport) => {
       if (user?.role === "authority" && newReport.category === user.related_category) {
@@ -87,6 +146,9 @@ const ReportTable = () => {
         setOpenCollapse(true);
       }
       setReports((prev) => [...prev, newReport]);
+      if (userInteracted) {
+        reportAddedSound.current.play().catch(err => console.error("Error playing sound:", err));
+      }    
     });
 
     socket.on("reportUpdated", (updatedReport) => {
@@ -117,6 +179,13 @@ const ReportTable = () => {
             : report
         )
       );
+      // 🔥 Play sound only when user has interacted and audio is ready
+      if (userInteracted && reportUpdatedSound.current.readyState >= 2) {
+        console.log("🎵 Playing report updated sound...");
+        reportUpdatedSound.current.play().catch(err => console.error("❌ Error playing sound:", err));
+      } else {
+        console.warn("🚨 Sound not playing: userInteracted =", userInteracted, " | readyState =", reportUpdatedSound.current.readyState);
+      }
     });
 
     socket.on("reportDeleted", (deletedReportId) => {
@@ -128,6 +197,9 @@ const ReportTable = () => {
         setOpenCollapse(true);
       }
       setReports((prev) => prev.filter((report) => report._id !== deletedReportId));
+      if (userInteracted) {
+        reportDeletedSound.current.play().catch(err => console.error("Error playing sound:", err));
+      }
     });
 
     return () => {
@@ -135,7 +207,7 @@ const ReportTable = () => {
       socket.off("reportUpdated");
       socket.off("reportDeleted");
     };
-  }, [user, fetchReports]);
+  }, [user, fetchReports, userInteracted]);
 
   useEffect(() => {
     fetchReports();
@@ -466,7 +538,7 @@ useEffect(() => {
         >
           {reports.length > 0 ? (
             reports.map((report) => (
-                <Box sx={{ display: "flex", justifyContent: "center", width: "75%" }}>
+                <Box key={report._id} sx={{ display: "flex", justifyContent: "center", width: "75%" }}>
                   <ReportCard report={report} user={user} onUpdateStatus={handleStatusUpdate} />
                 </Box>
             ))

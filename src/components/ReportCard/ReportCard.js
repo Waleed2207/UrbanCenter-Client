@@ -20,11 +20,15 @@ import {
   DialogActions,
   CardMedia,
   Chip,
+  TextField
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import moment from "moment-timezone";
 import axios from "axios";
 import { SERVER_URL } from "../../consts";
+import ImageUploadDialog from "../ImageUploadDialog/ImageUploadDialog";
+import ImagePreviewDialog from "../ImagePreviewDialog/ImagePreviewDialog";
+// import DEFAULT_IMAGE from "../../assets/defult_image.gif";
 
 const ReportCard = ({ report, user, onUpdateStatus }) => {
   const [status, setStatus] = useState(report.status);
@@ -34,10 +38,21 @@ const ReportCard = ({ report, user, onUpdateStatus }) => {
   const [error, setError] = useState(false);
   const [openImageDialog, setOpenImageDialog] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  
+  const [commentText, setCommentText] = useState("");  
+  const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   // ✅ Close Alert
   const handleCloseCollapse = () => {
     setOpenCollapse(false);
+  };
+  // ✅ Open Image Upload Dialog
+  const handleOpenImageDialog = () => {
+    setOpenImageDialog(true);
+  };
+
+  // ✅ Handle Image Selection from Dialog
+  const handleImageSelect = (imageFile) => {
+    setSelectedImage(imageFile);
+    setOpenImageDialog(false);
   };
 
 const handleStatusChange = async () => {
@@ -70,13 +85,31 @@ const handleStatusChange = async () => {
       setOpenCollapse(true);
       return;
     }
+    // 🔥 Validation: Ensure Comment and Image are provided before updating
+    if (!commentText.trim() || !selectedImage) {
+      setError(true);
+      setAlertMessage("⚠️ Please provide both a comment and an image before updating.");
+      setOpenCollapse(true);
+      return;
+    }
+    const formData = new FormData();
+    formData.append("status", status);
+    if (commentText) formData.append("comment_text", commentText);
+    if (selectedImage) {
+      formData.append("image", selectedImage); // ✅ Ensure image is added
+    } else {
+      console.warn("⚠️ No image selected, skipping image upload.");
+    }
+
+    console.log("📤 Sending FormData:", [...formData.entries()]); // ✅ Debugging: Check FormData content
 
     const response = await axios.put(
       `${SERVER_URL}/api/reports/report/status/${report._id}`,
-      { status },
+      formData ,
+      
       {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
           "Authorization": `Bearer ${token}`,
           "User-ID": storedUser._id, 
         },
@@ -102,7 +135,7 @@ const handleStatusChange = async () => {
 
 
 return (
-  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 3, width: "100%" }}>
+  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 3, width: "100%" }} >
     <Collapse in={openCollapse} sx={{ width: "100%" }}>
       <Alert severity={error ? "error" : "success"} onClose={handleCloseCollapse}>
         {alertMessage}
@@ -111,7 +144,7 @@ return (
 
     <Grid container justifyContent="center">
       <Grid item xs={20} sm={14} >
-      {/* {report.status !== "resolved" && ( */}
+      {report.status !== "resolved" && (
         <Card
           sx={{
             boxShadow: 3,
@@ -131,26 +164,23 @@ return (
               sx={{ width: 150, height: 150, borderRadius: 2, objectFit: "cover", cursor: "pointer" }}
               image={report.image_url}
               alt="Report"
-              onClick={() => {
-                setSelectedImage(report.image_url);
-                setOpenImageDialog(true);
-              }}
+              onClick={() => setOpenPreviewDialog(true)}  
             />
           )}
           <Box sx={{ flexGrow: 1 }}>
             {/* Report Category */}
-            <Typography variant="h6" color="primary" fontWeight="bold">
+            <Typography variant="h6" color="primary" fontWeight="bold" component="div">
               {report.category}
             </Typography>
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
             {/* Report Created Time */}
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 , minWidth: "50%" }}>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 , minWidth: "50%" }} component="div">
               <strong>📅 Created:</strong>{" "}
               <span>{moment(report.created_at).format("DD/MM/YYYY hh:mm A")}</span>
             </Typography>
 
             {/* Reported by (Citizen Name) */}
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1, minWidth: "50%"  }}>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1, minWidth: "50%"  }} component="div">
               <strong>👤 Reported by:</strong>{" "}
               <span style={{ fontWeight: "bold", color: "#1976D2" }}>
                 {report.citizen_name || "Unknown"}
@@ -158,18 +188,18 @@ return (
             </Typography>
             </Box>
             {/* Report Description */}
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1,width: "50%"  }}>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1,width: "50%"  }} component="div">
               <strong>📝 Description:</strong>{" "}
               <span>{report.description || "No description provided"}</span>
             </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1,width: "50%"  }}>
-              <strong>📝 phoneNumber:</strong>{" "}
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1,width: "50%"  }} component="div">
+              <strong>📞  phoneNumber:</strong>{" "}
               <span>{report.phone_number || "No description provided"}</span>
             </Typography>
 
 
             {/* Location Name */}
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }} component="div">
               <strong>📍 Location:</strong>{" "}
               <span>{report.location_name || "Unknown Location"}</span>
             </Typography>
@@ -177,7 +207,7 @@ return (
             {/* Report Status */}
             <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
             {/* Report Status */}
-            <Typography variant="body2" fontWeight="bold" sx={{ minWidth: "50%" }}>
+            <Typography variant="body2" fontWeight="bold" sx={{ minWidth: "50%" }} component="div">
               <strong>📌 Status:</strong>{" "}
               <Chip
                 label={report.status}
@@ -193,7 +223,7 @@ return (
             </Typography>
 
             {/* Report Priority */}
-            <Typography variant="body2" fontWeight="bold" sx={{ minWidth: "50%" }}>
+            <Typography variant="body2" fontWeight="bold" sx={{ minWidth: "50%" }} component="div">
               <strong>⚠️ Priority:</strong>{" "}
               <Chip
                 label={report.priority}
@@ -212,58 +242,52 @@ return (
           </Box>
           {/* Edit Button - Hidden or Disabled if Resolved */}
           {report.status !== "resolved" && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start", flexGrow: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start", flexGrow: 1 }} >
               <IconButton onClick={() => setOpenDialog(true)} disabled={report.status === "resolved"}>
                 <EditIcon color="primary" />
               </IconButton>
             </Box>
           )}
         </Card>
+      )}
       </Grid>
     </Grid>
 
-    {/* Status Update Dialog */}
-    <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-      <DialogTitle>Update Status</DialogTitle>
-      <DialogContent>
-        <FormControl fullWidth sx={{ mt: 2 }}>
-          <InputLabel>Status</InputLabel>
-          <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="in_progress">In Progress</MenuItem>
-            <MenuItem value="resolved">Resolved</MenuItem>
-          </Select>
-        </FormControl>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setOpenDialog(false)} color="secondary">
-          Cancel
-        </Button>
-        <Button onClick={handleStatusChange} color="primary" variant="contained">
-          Update
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <ImagePreviewDialog open={openPreviewDialog} onClose={() => setOpenPreviewDialog(false)} imageSrc={report.image_url} />
+  {/* Status Update Dialog */}
+    <Dialog open={openDialog} onClose={() => setOpenDialog(false)}
+      {...(!openDialog && { inert: true })}
+      >
+        <DialogTitle>Update Status</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Status</InputLabel>
+            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="in_progress">In Progress</MenuItem>
+              <MenuItem value="resolved">Resolved</MenuItem>
+            </Select>
+          </FormControl>
 
-    {/* Image Preview Dialog */}
-    <Dialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} maxWidth="sm" fullWidth>
-      <DialogTitle>Image Preview</DialogTitle>
-      <DialogContent>
-        {selectedImage && (
-          <img
-            src={selectedImage}
-            alt="Selected Report"
-            style={{ width: "100%", maxHeight: "500px", objectFit: "cover" }}
-          />
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setOpenImageDialog(false)} color="primary">
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
-  </Box>
+          <TextField label="Comment" multiline fullWidth sx={{ mt: 2 }} value={commentText} onChange={(e) => setCommentText(e.target.value)} />
+
+          <Button variant="contained" sx={{ mt: 2 }} onClick={handleOpenImageDialog}>
+            Upload Image
+          </Button>
+        </DialogContent>
+        <DialogActions inert={true}>
+          <Button onClick={() => setOpenDialog(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleStatusChange} color="primary" variant="contained">
+            Update
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+        {/* Image Upload Dialog */}
+        <ImageUploadDialog open={openImageDialog} onClose={() => setOpenImageDialog(false)} onImageSelect={handleImageSelect} />
+      </Box>
 );
 };
 

@@ -162,7 +162,7 @@ const AddReportStepper = ({ onReportSubmit }) => {
   };
 
   return (
-    <div className={classes.container}>
+    <Box className={classes.container}>
       <Box sx={{ width: "100%" }}>
         <Stepper activeStep={activeStep}>
           {steps.map((label) => (
@@ -321,7 +321,7 @@ const AddReportStepper = ({ onReportSubmit }) => {
           )}
         </Box>
       </Box>
-    </div>
+    </Box>
   );
 };
 

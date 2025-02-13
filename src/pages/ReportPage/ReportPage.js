@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Box from "@mui/material/Box";
 import AddReportStepper from "../../components/AddReportStepper/AddReportStepper";
 import classes from "./ReportPage.module.scss";
 
@@ -11,7 +12,7 @@ const ReportPage = () => {
   };
 
   return (
-    <div className={classes.container}>
+    <Box className={classes.container}>
       <h2>Submit a New Report</h2>
 
       {/* ✅ AddReportStepper is now shown directly in the page */}
@@ -19,16 +20,16 @@ const ReportPage = () => {
 
       {/* ✅ Display submitted reports */}
       {reports.length > 0 && (
-        <div className={classes.reportsList}>
+        <Box className={classes.reportsList}>
           <h3>Submitted Reports</h3>
           <ul>
             {reports.map((report, index) => (
               <li key={index}>{report.category} - {report.description}</li>
             ))}
           </ul>
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 

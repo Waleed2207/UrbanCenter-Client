@@ -26,11 +26,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem"; 
-import SettingsIcon from "@mui/icons-material/Settings";
 import MailIcon from '@mui/icons-material/Mail';
 import Cookies from "js-cookie";
 import Badge from '@mui/material/Badge';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 const drawerWidth = 240;
 
@@ -252,7 +252,7 @@ const Dashboard = ({ user, onLogout, children }) => {
         <List>
           {[
             { text: "Reports", path: "/reports", icon: <InboxIcon /> },
-            { text: "Settings", path: "/settings", icon: <SettingsIcon /> },
+            { text: "Resolved Report", path: "/reports/api/v1", icon: <CheckCircleIcon /> },
             { text: "Start Report", path: "/reports/api", icon: <ReportProblemIcon/>}
           ].map(({ text, path, icon }) => (
             <ListItem key={text} disablePadding>
