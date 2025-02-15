@@ -252,7 +252,6 @@ const Dashboard = ({ user, onLogout, children }) => {
         {/* Common Menu Items for All Users */}
         {[
           { text: "Reports", path: "/reports", icon: <InboxIcon /> },
-          { text: "Start Report", path: "/reports/api", icon: <ReportProblemIcon/> }
         ].map(({ text, path, icon }) => (
           <ListItem key={text} disablePadding>
             <ListItemButton onClick={() => handleNavigation(path)}>
@@ -261,7 +260,15 @@ const Dashboard = ({ user, onLogout, children }) => {
             </ListItemButton>
           </ListItem>
         ))}
-
+        {/* 🔥 Show "Start Report" ONLY if the user is an citizen */}
+        {user?.role !== "authority" && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => handleNavigation("/reports/api")}>
+              <ListItemIcon><ReportProblemIcon /></ListItemIcon>
+              <ListItemText primary="Start Report" />
+            </ListItemButton>
+          </ListItem>
+        )}
         {/* 🔥 Show "Resolved Report" ONLY if the user is an authority */}
         {user?.role === "authority" && (
           <ListItem disablePadding>
